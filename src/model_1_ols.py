@@ -1,52 +1,74 @@
+import os
 import pandas as pd
-import statsmodels.api as sm
+import numpy as np
 
-from util import prepare_model_1_data
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.metrics import r2_score, mean_squared_error
 
-def load_data(path: str) -> pd.DataFrame:
+from util import calculate_city_features
+
+def run_model_1(df, output_dir="output"):
     """
-    Load raw dataset.
-
-    Parameters
-    ----------
-    path : str
-        Path to raw CSV data.
-
-    Returns
-    -------
-    pandas.DataFrame
+    模型一：城市层面薪资决定机制（机器学习回归）
     """
-    return pd.read_csv(path)
 
-def run_wage_regression(df: pd.DataFrame):
-    """
-    Run OLS regression for wage determination.
+    # 1. 构造城市层面特征
+    HIGH_TECH_INDUSTRIES = [
+    "Design/IT",
+    "Engineering",
+    "IT",
+    "Finance",
+    "Healthcare"
+    ]
+    
+    city_df = calculate_city_features(
+        df,
+        high_tech_industries=HIGH_TECH_INDUSTRIES,
+    )
 
-    Parameters
-    ----------
-    df : pandas.DataFrame
-        Raw dataset.
+    city_df["avg_log_salary"] = np.log(city_df["avg_salary"])
 
-    Returns
-    -------
-    RegressionResults
-        Fitted OLS model.
-    """
-    df_model = prepare_model_1_data(df)
+    features = [
+        "phd_ratio",
+        "hi_industry_ratio",
+        "skill_entropy"
+    ]
 
-    y = df_model["log_salary"]
-    X = df_model.drop(columns=["log_salary"])
+    X = city_df[features]
+    y = city_df["avg_log_salary"]
 
-    X = sm.add_constant(X)
+    # 2. Gradient Boosting 回归
+    model = GradientBoostingRegressor(
+        n_estimators=300,
+        learning_rate=0.05,
+        max_depth=3,
+        random_state=42
+    )
 
-    model = sm.OLS(y, X)
-    results = model.fit(cov_type="HC3")  # robust standard errors
+    model.fit(X, y)
 
-    return results
+    # 3. 拟合效果（仅作为参考）
+    y_pred = model.predict(X)
+    r2 = r2_score(y, y_pred)
+    rmse = np.sqrt(mean_squared_error(y, y_pred))
+
+    print(f"Model 1 | R2: {r2:.3f}, RMSE: {rmse:.3f}")
+
+    # 4. 特征重要性
+    importance = pd.DataFrame({
+        "feature": features,
+        "importance": model.feature_importances_
+    }).sort_values("importance", ascending=False)
+
+    # 5. 输出结果
+    os.makedirs(output_dir, exist_ok=True)
+    importance.to_csv(f"{output_dir}/model_1_feature_importance.csv", index=False)
+    city_df.to_csv(f"{output_dir}/model_1_city_data.csv", index=False)
+
+    return model, importance, city_df
+
 
 if __name__ == "__main__":
-    data_path = "./data/china_job_market_2025.csv"
-    df = load_data(data_path)
-
-    results = run_wage_regression(df)
-    print(results.summary())
+    df = pd.read_csv("./data/china_job_market_2025.csv")
+    model, importance, city_df = run_model_1(df)
+    print(importance)
