@@ -1,0 +1,27 @@
+% ===== 字体设置 =====
+\setmainfont{SimSun} % 宋体
+\setCJKmainfont{SimSun}
+
+% ===== 标题格式 =====
+\usepackage{titlesec}
+
+% 一级标题：宋体 加粗 四号
+\titleformat{\section}
+  {\bfseries\zihao{4}}
+  {\thesection.}
+  {0.5em}
+  {}
+
+% 二级标题：宋体 加粗 小四
+\titleformat{\subsection}
+  {\bfseries\zihao{-4}}
+  {\thesubsection}
+  {0.5em}
+  {}
+
+% 三级标题：宋体 小四
+\titleformat{\subsubsection}
+  {\zihao{-4}}
+  {\thesubsubsection}
+  {0.5em}
+  {}
