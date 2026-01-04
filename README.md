@@ -73,15 +73,6 @@ Author: Kundan Bedmutha
 
 URL: https://www.kaggle.com/datasets/kundanbedmutha/china-job-market-2025-dataset
 
-## 📝 报告说明
-
-完整分析报告采用 LaTeX 编写，位于 report/ 目录下。使用 XeLaTeX 编译：
-```bash
-xelatex main.tex
-bibtex main
-xelatex main.tex
-xelatex main.tex
-```
 
 ## 📌 备注
 
